@@ -24,6 +24,8 @@ def parse(manifest_content, SSM):
                 if stream_index_child.tag == 'c':
                     SSM.video_duration.append(stream_index_child.get('d'))
 
+            SSM.build_url()
+
         if stream_index.get('Type') == 'audio':
             SSM.audio_url_template = stream_index.get('Url')
             for stream_index_child in stream_index:
@@ -31,6 +33,9 @@ def parse(manifest_content, SSM):
                     SSM.audio_quality.append(stream_index_child.get('Bitrate'))
                 if stream_index_child.tag == 'c':
                     SSM.audio_duration.append(stream_index_child.get('d'))
+
+            SSM.build_url()
+
 
 
 def open_file():
