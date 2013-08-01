@@ -21,5 +21,7 @@ def fetch_manifest(manifest_url):
 def fetch_sample_manifest():
     fetch_manifest('http://ss.logicmd.net/tears/tears_of_steel_720p.ism/Manifest')
 
+
+
 if __name__ == '__main__':
     parse(fetch_sample_manifest())
