@@ -17,6 +17,7 @@ def parse(manifest_content, SSM):
     for stream_index in root:
         #print stream_index.tag, stream_index.attrib
         if stream_index.get('Type') == 'video':
+            SSM.video_url_template = stream_index.get('Url')
             for stream_index_child in stream_index:
                 if stream_index_child.tag == 'QualityLevel':
                     SSM.video_quality.append(stream_index_child.get('Bitrate'))
@@ -24,6 +25,7 @@ def parse(manifest_content, SSM):
                     SSM.video_duration.append(stream_index_child.get('d'))
 
         if stream_index.get('Type') == 'audio':
+            SSM.audio_url_template = stream_index.get('Url')
             for stream_index_child in stream_index:
                 if stream_index_child.tag == 'QualityLevel':
                     SSM.audio_quality.append(stream_index_child.get('Bitrate'))
