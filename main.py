@@ -15,12 +15,11 @@ def test1():
         print vu
 
 def test2():
-    path = './data/manifest_list.txt'
-    manifest_list = []
-    fetcher.fetch_manifest_from_file(path, manifest_list)
-    for manifest in manifest_list:
+    path = './data/list.txt'
+    manifest_dic = fetcher.fetch_manifest_from_file(path)
+    for manifest_url in manifest_dic.keys():
         SSM = SmoothStreamingMedia()
-        parser.parse(manifest, SSM)
+        parser.parse(manifest_dic[manifest_url], manifest_url, SSM)
         fetcher.fetch_fragment(SSM)
 
 

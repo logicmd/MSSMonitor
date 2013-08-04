@@ -12,12 +12,12 @@ def fetch_manifest(manifest_url):
     return manifest
 
 
-def fetch_manifest_from_file(file_name, manifest_list):
+def fetch_manifest_from_file(file_name):
     f = open(file_name)
+    manifest_dic = {}
     for line in f:
-        print line
-        manifest_list.append(fetch_manifest(line))
-
+        manifest_dic[line] = fetch_manifest(line)
+    return manifest_dic
 
 def fetch_sample_manifest():
     return fetch_manifest('http://ss.logicmd.net/tears/tears_of_steel_720p.ism/Manifest')
