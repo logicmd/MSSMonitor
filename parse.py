@@ -7,9 +7,10 @@ from SmoothStreamingMedia import SmoothStreamingMedia
 
 
 
-def parse(manifest_content, SSM):
-    tree = ET.parse(manifest_content)
-    root = tree.getroot()
+def parse(manifest_content, manifest_url, SSM):
+    # tree = ET.parse(manifest_file)
+    # root = tree.getroot()
+    root = ET.fromstring(manifest_content)
     if root.tag == 'SmoothStreamingMedia':
         SSM.duration = root.get('Duration')
         #print root.get('Duration')
@@ -24,7 +25,6 @@ def parse(manifest_content, SSM):
                 if stream_index_child.tag == 'c':
                     SSM.video_duration.append(stream_index_child.get('d'))
 
-            SSM.build_url()
 
         if stream_index.get('Type') == 'audio':
             SSM.audio_url_template = stream_index.get('Url')
@@ -34,14 +34,17 @@ def parse(manifest_content, SSM):
                 if stream_index_child.tag == 'c':
                     SSM.audio_duration.append(stream_index_child.get('d'))
 
-            SSM.build_url()
-
+    # For debug
+    SSM.base_url = manifest_url
+    SSM.build_url()
 
 
 def open_file():
-    f = open('data/Manifest.xml')
+    f = open('data/Manifest_fetch.xml')
     return f.read()
 
 if __name__ == '__main__':
     SSM = SmoothStreamingMedia()
-    parse('data/Manifest.xml', SSM)
+    parse(open_file(), 'http://ss.logicmd.net/tears/tears_of_steel_720p.ism/Manifest', SSM)
+    for vu in SSM.video_urls:
+        print vu
