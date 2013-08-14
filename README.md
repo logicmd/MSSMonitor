@@ -2,8 +2,6 @@ MSSMonitor
 ==========
 
 
-## Dependency
-
-pip install requests
-
-easy_install requests
+Useage
+------
+Use main.py to initiate the crawler

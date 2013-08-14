@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import urllib2
+import cookielib
 
 def fetch_manifest(manifest_url):
     req = urllib2.Request(manifest_url)
