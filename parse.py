@@ -5,9 +5,9 @@ import xml.etree.ElementTree as ET
 from SmoothStreamingMedia import SmoothStreamingMedia
 import json
 from pprint import pprint
-import Cookie
+import urllib2
 
-def config_writer():
+def config_write():
     config = {}
     config['UserAgent'] =\
         'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1581.2 Safari/537.36'
@@ -38,7 +38,7 @@ def config_writer():
         f.write(json.dumps(config))
         f.close()
 
-def config_parser(files='conf/Request.json'):
+def config_parse(files='conf/Request.json'):
     # Writing our configuration file to 'example.cfg'
     with open(files, 'r') as f:
         config=json.load(f)
@@ -46,28 +46,28 @@ def config_parser(files='conf/Request.json'):
         #print config
         #pprint(config)
 
+
+        opener = urllib2.build_opener()
+
+        if config['UserAgent']:
+            opener.addheaders.append(('User-agent', config['UserAgent']))
+
+
         if config['Cookies']:
-            Cookie_list = []
+            cookie_list=[]
+            is_first=True
             for a_cookie in config['Cookies']:
-                print a_cookie['Name'], a_cookie['Value']
+                if not is_first:
+                    cookie_list.append("; ")
+                cookie_list.append(a_cookie['Name']+'='+a_cookie['Value'])
 
-                C = Cookie.BaseCookie()
-                C[a_cookie['Name']] = a_cookie['Value']
-                print C
-                return
-                if(a_cookie['Domain']):
-                    C[a_cookie['Name']['domain']] = a_cookie['Domain']
-                if(a_cookie['Path']):
-                    C[a_cookie['Name']['path']] = a_cookie['Path']
-                if(a_cookie['Expire']):
-                    C[a_cookie['Name']['expire']] = a_cookie['Expire']
-                if(a_cookie['Secure']):
-                    C[a_cookie['Name']['secure']] = bool(a_cookie['Secure'])
+                if is_first:
+                    is_first=False
+            cookie_str=''.join(cookie_list)
+            opener.addheaders.append(('User-agent', cookie_str))
 
-                Cookie_list.append(C)
 
-                print C
-        return Cookie_list
+    return opener
 
 
 def parse(manifest_content, manifest_url, SSM):
@@ -111,5 +111,4 @@ if __name__ == '__main__':
     # parse(open_file(), 'http://ss.logicmd.net/tears/tears_of_steel_720p.ism/Manifest', SSM)
     # for vu in SSM.video_urls:
     #     print vu
-    #config_writer()
-    config_parser()
+    config_parse()

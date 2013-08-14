@@ -22,14 +22,28 @@ def test2():
         parser.parse(manifest_dic[manifest_url], manifest_url, SSM)
         fetcher.fetch_fragment(SSM)
 
+def test3():
+    url = 'http://ss.logicmd.net/tears/tears_of_steel_720p.ism/Manifest'
+    cookie_file = 'conf/Request.json'
+    cookie_opener = parser.config_parse(cookie_file)
+
+    SSM = SmoothStreamingMedia()
+    parser.parse(fetcher.fetch_manifest_with_cookies(url,cookie_opener), url, SSM)
+
+    for vu in SSM.video_urls:
+        print vu
+
 
 def main():
-    manifest_list = []
-    fetcher.fetch_manifest_from_file('D:/Develop/Python/MSSMonitor/data/list.txt', manifest_list)
-    for manifest in manifest_list:
+    cookie_file = 'conf/Request.json'
+    cookie_opener = parser.config_parse(cookie_file)
+
+    manifest_dic = fetcher.fetch_manifest_from_file('./data/list.txt',cookie_opener)
+
+    for (manifest_url,manifest) in manifest_dic.items():
         SSM = SmoothStreamingMedia()
-        parser.parse(manifest, SSM)
+        parser.parse(manifest, manifest_url, SSM)
         fetcher.fetch_fragment(SSM)
 
 if __name__ == '__main__':
-    test2()
+    main()
