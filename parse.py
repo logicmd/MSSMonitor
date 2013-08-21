@@ -76,26 +76,45 @@ def parse(manifest_content, manifest_url, SSM):
     root = ET.fromstring(manifest_content)
     if root.tag == 'SmoothStreamingMedia':
         SSM.duration = root.get('Duration')
+        SSM.is_live = root.get('IsLive')
         #print root.get('Duration')
+
+    time_sync_point = 2
 
     for stream_index in root:
         #print stream_index.tag, stream_index.attrib
         if stream_index.get('Type') == 'video':
             SSM.video_url_template = stream_index.get('Url')
             for stream_index_child in stream_index:
-                if stream_index_child.tag == 'QualityLevel':
-                    SSM.video_quality.append(stream_index_child.get('Bitrate'))
                 if stream_index_child.tag == 'c':
-                    SSM.video_duration.append(stream_index_child.get('d'))
+                    SSM.video_duration.append(int(stream_index_child.get('d')))
+                    if time_sync_point>0:
+                        #print stream_index_child.get('t')
+                        if stream_index_child.get('t'):
+                            SSM.video_ts_offset = int(stream_index_child.get('t'))
+                            time_sync_point -= 1
+
+                elif stream_index_child.tag == 'QualityLevel':
+                    SSM.video_quality.append(stream_index_child.get('Bitrate'))
+
+
+
 
 
         if stream_index.get('Type') == 'audio':
             SSM.audio_url_template = stream_index.get('Url')
             for stream_index_child in stream_index:
-                if stream_index_child.tag == 'QualityLevel':
-                    SSM.audio_quality.append(stream_index_child.get('Bitrate'))
                 if stream_index_child.tag == 'c':
-                    SSM.audio_duration.append(stream_index_child.get('d'))
+                    SSM.audio_duration.append(int(stream_index_child.get('d')))
+                    if time_sync_point>0:
+                        #print stream_index_child.get('t')
+                        if stream_index_child.get('t'):
+                            SSM.audio_ts_offset = int(stream_index_child.get('t'))
+                            time_sync_point -= 1
+
+                elif stream_index_child.tag == 'QualityLevel':
+                    SSM.audio_quality.append(stream_index_child.get('Bitrate'))
+
 
     # For debug
     SSM.base_url = manifest_url
