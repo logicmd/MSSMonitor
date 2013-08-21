@@ -4,6 +4,7 @@
 import urllib2
 import datetime
 import os
+import struct
 
 class SmoothStreamingMedia:
     def __init__(self):
@@ -175,12 +176,14 @@ class SmoothStreamingMedia:
 
     def get_traf(self,fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210980193189)'):
         chunk = 1048576 * 4
-        uuid = '\x00\x00\x00\x2c\x75\x75\x69\x64'
+        uuid = '\x00\x00\x00\x2c\x75\x75\x69\x64\xd4\x80\x7e\xf2\xca\x39\x46\x95'
         if isinstance(fs, basestring):
             f = open(fs,'rb')
         else:
             f = fs
         eof = False
+
+        conv = lambda x: 256 * conv(x[:-1]) + ord(x[-1]) if x else 0
 
         s = ''
         while uuid not in s:
@@ -190,8 +193,22 @@ class SmoothStreamingMedia:
                 break
             uuid_loc = s.find(uuid)
 
-            traf = int(s[uuid_loc+30:uuid_loc+36],16)
-            print traf
+            #traf = int(s[uuid_loc+31:uuid_loc+36],16)
+
+            x='\x00\x00\x04\xbd\x3e\x47\x18\xde'
+            xx='\x00\x00\x04\xbdF\x9f\x93\xa5'
+            print int(s[uuid_loc+31:uuid_loc+38],16)
+            print conv(s[uuid_loc+32:uuid_loc+38])
+
+            #Tutorial
+            #print(hex(65535))
+            #print(int(hex(65535),16))
+            #print(ord('\xff'))
+            #print(struct.unpack('BB','\xff\xff'))
+            #print(struct.unpack('Q','\x00\x00\x04\xbd\x3e\x47\x18\xde'))
+            #print(struct.unpack('Q','\x00\x00\x04\xbdF\x9f\x93\xa5'))
+            #traf = int(s[uuid_loc+30:uuid_loc+36])
+            #print traf
 
 if __name__ == '__main__':
     #print datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
