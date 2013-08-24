@@ -174,9 +174,9 @@ class SmoothStreamingMedia:
                 except urllib2.URLError, e:
                     print "URL Error:",e.reason , url
 
-    def get_traf(self,fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210980193189)'):
+    def get_traf(self,fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210880115185)'):
         chunk = 1048576 * 4
-        uuid = '\x00\x00\x00\x2c\x75\x75\x69\x64\xd4\x80\x7e\xf2\xca\x39\x46\x95'
+        uuid = '\x00\x00\x00\x3d\x75\x75\x69\x64\xd4\x80\x7e\xf2\xca\x39\x46\x95'
         if isinstance(fs, basestring):
             f = open(fs,'rb')
         else:
@@ -193,26 +193,37 @@ class SmoothStreamingMedia:
                 break
             uuid_loc = s.find(uuid)
 
-            #traf = int(s[uuid_loc+31:uuid_loc+36],16)
+            traf_hex = [
+                s[uuid_loc+29:uuid_loc+37],
+                s[uuid_loc+45:uuid_loc+53]
+                ]
 
-            x='\x00\x00\x04\xbd\x3e\x47\x18\xde'
-            xx='\x00\x00\x04\xbdF\x9f\x93\xa5'
-            print int(s[uuid_loc+31:uuid_loc+38],16)
-            print conv(s[uuid_loc+32:uuid_loc+38])
+            traf=[]
+            for traf_h in traf_hex:
+                #print(struct.unpack('Q',traf_h))
+                #print(conv(traf_h))
+                traf.append(conv(traf_h))
+
+            return traf[0], traf[1]
 
             #Tutorial
             #print(hex(65535))
             #print(int(hex(65535),16))
             #print(ord('\xff'))
+            #print '0x'+'%x' %(ord('\x3c'))
+
+            #traf_hex=s[uuid_loc+30:uuid_loc+37]
+            #print [('0x'+'%x' %ord(k)) for k in traf_hex]
+
             #print(struct.unpack('BB','\xff\xff'))
             #print(struct.unpack('Q','\x00\x00\x04\xbd\x3e\x47\x18\xde'))
             #print(struct.unpack('Q','\x00\x00\x04\xbdF\x9f\x93\xa5'))
-            #traf = int(s[uuid_loc+30:uuid_loc+36])
-            #print traf
+            #print conv(s[uuid_loc+32:uuid_loc+38])
+
 
 if __name__ == '__main__':
     #print datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     SSM = SmoothStreamingMedia()
-    SSM.get_traf()
+    print SSM.get_traf()
     # s = 'QualityLevels({bitrate})/Fragments(audio={start time})'
     # print  s.replace('{bitrate}', '200', 1).replace('{start time}', '300', 1)
