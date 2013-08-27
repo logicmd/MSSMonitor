@@ -79,6 +79,8 @@ class SmoothStreamingMedia:
                                 .replace('{start time}', str(v_cusum), 1)
 
                             self.urls.append(frag_url)
+                            if self.is_live:
+                                self.video_urls.append(frag_url)
                             if v_replacable:
                                 self.urls.append(frag_url.replace('Fragments','FragmentInfo'))
 
@@ -93,6 +95,8 @@ class SmoothStreamingMedia:
                                 .replace('{start time}', str(a_cusum), 1)
 
                             self.urls.append(frag_url)
+                            if self.is_live:
+                                self.audio_urls.append(frag_url)
                             if a_replacable:
                                 self.urls.append(frag_url.replace('Fragments','FragmentInfo'))
 
@@ -131,6 +135,9 @@ class SmoothStreamingMedia:
             print "URL Error:",e.reason , url
 
 
+
+
+
     def fetch_fragment(self, base_path='./Snapshot'):
         url_prefix, ism = self.get_url_ism()
         timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
@@ -167,7 +174,6 @@ class SmoothStreamingMedia:
                     local_file = open(path+'/'+u, "w")
                     #Write to our local file
                     local_file.write(f.read())
-
                     local_file.close()
 
                 #handle errors
@@ -176,10 +182,73 @@ class SmoothStreamingMedia:
                 except urllib2.URLError, e:
                     print "URL Error:",e.reason , url
 
-    def get_tfrf(fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210880115185)'):
+    def fetch_live_fragment(self, base_path='./Snapshot', max_num=100):
+        url_prefix, ism = self.get_url_ism()
+        timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+
+        path = base_path + '/' + timestamp + '/' + ism
+
+        self.sub_fetch_manifest(url_prefix, path)
+
+        #Fetch Fragment
+        counter = 1
+        if self.urls:
+
+            for u in self.urls:
+
+                if counter > max_num:
+                    break
+
+                i = u.rfind('/')
+                extended_path = u[:i]
+
+                file_path = path+'/'+extended_path
+                file_name = u[i+1:]
+                url = url_prefix+'/'+u
+
+                if not os.path.exists(file_path):
+                    os.makedirs(file_path)
+                req = urllib2.Request(url)
+
+                # Open the url
+                try:
+                    f = urllib2.urlopen(req)
+                    print "[%d]downloading %s" %(counter, url)
+                    counter += 1
+
+                    # Open our local file for writing
+                    local_file = open(path+'/'+u, "w")
+
+                    #Write to our local file
+                    local_file.write(f.read())
+                    local_file.close()
+
+                    tfxd, tfrf = self.get_tf(path+'/'+u)
+                    ts_loc = url.find('Fragments')
+                    print url[ts_loc+16:-1]
+                    ts=int(url[ts_loc+16:-1])
+                    next_url = ""
+                    if tfxd >= 0 and tfrf >0 and ts == tfxd:
+                        next_url = url.replace(str(tfxd), str(tfrf))
+                        if not next_url in self.urls:
+                            self.urls.append(next_url)
+                            print 'appending next url: ' + next_url
+                    else:
+                        raise IOError("next fragment not found")
+
+
+
+                #handle errors
+                except urllib2.HTTPError, e:
+                    print "HTTP Error:",e.code , url
+                except urllib2.URLError, e:
+                    print "URL Error:",e.reason , url
+
+
+    def get_tf(self, fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210880115185)'):
         chunk = 1048576 * 4
-        uuid_tfxd
-        uuid = '\x00\x00\x00\x3d\x75\x75\x69\x64\xd4\x80\x7e\xf2\xca\x39\x46\x95'
+        uuid_tfxd = '\x00\x00\x00\x2c\x75\x75\x69\x64\x6d\x1d\x9b\x05\x42\xd5\x44\xe6'
+        uuid_tfrf = '\x00\x00\x00\x3d\x75\x75\x69\x64\xd4\x80\x7e\xf2\xca\x39\x46\x95'
         if isinstance(fs, basestring):
             f = open(fs,'rb')
         else:
@@ -189,25 +258,30 @@ class SmoothStreamingMedia:
         conv = lambda x: 256 * conv(x[:-1]) + ord(x[-1]) if x else 0
 
         s = ''
-        while uuid not in s:
+        while uuid_tfxd not in s or uuid_tfrf not in s:
             s = f.read(chunk)
             if not s:
                 eof = True
                 break
-            uuid_loc = s.find(uuid)
+            uuid_tfxd_loc = s.find(uuid_tfxd)
+            uuid_tfrf_loc = s.find(uuid_tfrf)
+            #print uuid_tfxd_loc, uuid_tfrf_loc
 
-            traf_hex = [
-                s[uuid_loc+29:uuid_loc+37],
-                s[uuid_loc+45:uuid_loc+53]
+            tfxd_hex = s[uuid_tfxd_loc+28:uuid_tfxd_loc+36]
+            tfrf_hex = [
+                s[uuid_tfrf_loc+29:uuid_tfrf_loc+37],
+                s[uuid_tfrf_loc+45:uuid_tfrf_loc+53]
                 ]
 
-            traf=[]
-            for traf_h in traf_hex:
-                #print(struct.unpack('Q',traf_h))
-                print(conv(traf_h))
-                traf.append(conv(traf_h))
+            tfxd = conv(tfxd_hex)
 
-            return traf[0], traf[1]
+            tfrf=[]
+            for tfrf_h in tfrf_hex:
+                #print(struct.unpack('Q',traf_h))
+                #print(conv(tfrf_h))
+                tfrf.append(conv(tfrf_h))
+
+            return tfxd, tfrf[0]
 
             #Tutorial
             #print(hex(65535))
@@ -227,6 +301,6 @@ class SmoothStreamingMedia:
 if __name__ == '__main__':
     #print datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     SSM = SmoothStreamingMedia()
-    print SSM.get_traf()
+    print SSM.get_tf()
     # s = 'QualityLevels({bitrate})/Fragments(audio={start time})'
     # print  s.replace('{bitrate}', '200', 1).replace('{start time}', '300', 1)

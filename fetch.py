@@ -42,6 +42,9 @@ def fetch_sample_manifest_with_cookies(opener):
 def fetch_fragment(SSM):
     SSM.fetch_fragment()
 
+def fetch_live_fragment(SSM):
+    SSM.fetch_live_fragment()
+
 
 if __name__ == '__main__':
     opener=parser.config_parse()

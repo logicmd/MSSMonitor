@@ -20,6 +20,12 @@ def test1f():
     parser.parse(fetcher.fetch_manifest(url), url, SSM)
     fetcher.fetch_fragment(SSM)
 
+def test_live():
+    url = 'http://ss.logicmd.net/live/LiveSmoothStream.isml/Manifest'
+    SSM = SmoothStreamingMedia()
+    parser.parse(fetcher.fetch_manifest(url), url, SSM)
+    fetcher.fetch_live_fragment(SSM)
+
 
 def test2():
     path = './data/list.txt'
@@ -53,4 +59,4 @@ def main():
         fetcher.fetch_fragment(SSM)
 
 if __name__ == '__main__':
-    test1f()
+    test_live()
