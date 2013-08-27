@@ -79,6 +79,8 @@ class SmoothStreamingMedia:
                                 .replace('{start time}', str(v_cusum), 1)
 
                             self.urls.append(frag_url)
+                            if self.is_live:
+                                self.video_urls.append(frag_url)
                             if v_replacable:
                                 self.urls.append(frag_url.replace('Fragments','FragmentInfo'))
 
@@ -93,6 +95,8 @@ class SmoothStreamingMedia:
                                 .replace('{start time}', str(a_cusum), 1)
 
                             self.urls.append(frag_url)
+                            if self.is_live:
+                                self.audio_urls.append(frag_url)
                             if a_replacable:
                                 self.urls.append(frag_url.replace('Fragments','FragmentInfo'))
 
@@ -130,6 +134,9 @@ class SmoothStreamingMedia:
             print "HTTP Error:",e.code , url
         except urllib2.URLError, e:
             print "URL Error:",e.reason , url
+
+
+
 
 
     def fetch_fragment(self, base_path='./Snapshot'):
@@ -173,6 +180,49 @@ class SmoothStreamingMedia:
                     print "HTTP Error:",e.code , url
                 except urllib2.URLError, e:
                     print "URL Error:",e.reason , url
+
+    def fetch_live_fragment(self, base_path='./Snapshot'):
+        url_prefix, ism = self.get_url_ism()
+        timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+
+        path = base_path + '/' + timestamp + '/' + ism
+
+        self.sub_fetch_manifest(url_prefix, path)
+
+        #Fetch Fragment
+        counter = 1
+        if self.urls:
+
+            for u in self.urls:
+                i = u.rfind('/')
+                extended_path = u[:i]
+
+                file_path = path+'/'+extended_path
+                file_name = u[i+1:]
+                url = url_prefix+'/'+u
+
+                if not os.path.exists(file_path):
+                    os.makedirs(file_path)
+                req = urllib2.Request(url)
+
+                # Open the url
+                try:
+                    f = urllib2.urlopen(req)
+                    print "[%d]downloading %s" %(counter, url)
+                    counter += 1
+
+                    # Open our local file for writing
+                    local_file = open(path+'/'+u, "w")
+                    #Write to our local file
+                    local_file.write(f.read())
+                    local_file.close()
+
+                #handle errors
+                except urllib2.HTTPError, e:
+                    print "HTTP Error:",e.code , url
+                except urllib2.URLError, e:
+                    print "URL Error:",e.reason , url
+
 
     def get_traf(self,fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210880115185)'):
         chunk = 1048576 * 4
