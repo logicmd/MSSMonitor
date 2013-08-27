@@ -109,7 +109,6 @@ class SmoothStreamingMedia:
         file_path = path
         file_name = timestamp+'.manifest'
         url = url_prefix +'/Manifest'
-
         if not os.path.exists(file_path):
             os.makedirs(file_path)
         req = urllib2.Request(url)
@@ -140,7 +139,9 @@ class SmoothStreamingMedia:
 
         self.sub_fetch_manifest(url_prefix, path)
 
-        #Fetch Fragment
+        print self.is_live
+
+        #Fetch Fragments
         counter = 1
         if self.urls:
 
@@ -166,6 +167,7 @@ class SmoothStreamingMedia:
                     local_file = open(path+'/'+u, "w")
                     #Write to our local file
                     local_file.write(f.read())
+
                     local_file.close()
 
                 #handle errors
@@ -174,8 +176,9 @@ class SmoothStreamingMedia:
                 except urllib2.URLError, e:
                     print "URL Error:",e.reason , url
 
-    def get_traf(self,fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210880115185)'):
+    def get_tfrf(fs='D:/Develop/Python/MSSMonitor/Snapshot/2013-08-21_16-13-21/hss_live.isml/QualityLevels(160000)/Fragments(audio=5210880115185)'):
         chunk = 1048576 * 4
+        uuid_tfxd
         uuid = '\x00\x00\x00\x3d\x75\x75\x69\x64\xd4\x80\x7e\xf2\xca\x39\x46\x95'
         if isinstance(fs, basestring):
             f = open(fs,'rb')
@@ -201,7 +204,7 @@ class SmoothStreamingMedia:
             traf=[]
             for traf_h in traf_hex:
                 #print(struct.unpack('Q',traf_h))
-                #print(conv(traf_h))
+                print(conv(traf_h))
                 traf.append(conv(traf_h))
 
             return traf[0], traf[1]
