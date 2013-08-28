@@ -22,6 +22,8 @@ class SmoothStreamingMedia:
         self.is_live = None
         self.video_ts_offset = ''
         self.audio_ts_offset = ''
+        self.video_ts = []
+        self.audio_ts = []
 
     #def info(self):
     #    s='VDuration is ' + self.duration + '/n'
@@ -71,7 +73,11 @@ class SmoothStreamingMedia:
 
                     minus = v_cusum - a_cusum
 
-                    if minus < a_avg/2 and i<v_fnum:
+                    #print v_fnum, a_fnum, i, j, v_cusum, a_cusum
+
+                    if (minus < a_avg/2 or j==a_fnum) and i<v_fnum:
+
+                        self.video_ts.append(v_cusum)
 
                         for vq in self.video_quality:
                             frag_url=self.video_url_template\
@@ -88,7 +94,10 @@ class SmoothStreamingMedia:
                         i+=1
 
 
-                    if minus > -a_avg/2 and j<a_fnum:
+                    if (minus > -a_avg/2 or i==v_fnum) and j<a_fnum:
+
+                        self.audio_ts.append(a_cusum)
+
                         for aq in self.audio_quality:
                             frag_url = self.audio_url_template\
                                 .replace('{bitrate}', str(aq), 1)\
@@ -146,8 +155,6 @@ class SmoothStreamingMedia:
 
         self.sub_fetch_manifest(url_prefix, path)
 
-        print self.is_live
-
         #Fetch Fragments
         counter = 1
         if self.urls:
@@ -171,7 +178,7 @@ class SmoothStreamingMedia:
                     counter += 1
 
                     # Open our local file for writing
-                    local_file = open(path+'/'+u, "w")
+                    local_file = open(path+'/'+u, "wb")
                     #Write to our local file
                     local_file.write(f.read())
                     local_file.close()
@@ -217,30 +224,44 @@ class SmoothStreamingMedia:
                     counter += 1
 
                     # Open our local file for writing
-                    local_file = open(path+'/'+u, "w")
+                    local_file = open(path+'/'+u, "wb")
 
                     #Write to our local file
                     local_file.write(f.read())
                     local_file.close()
 
-                    tfxd, tfrf = self.get_tf(path+'/'+u)
-                    ts_loc = url.find('Fragments')
-                    print url[ts_loc+16:-1]
-                    ts=int(url[ts_loc+16:-1])
-                    next_url = ""
-                    if tfxd >= 0 and tfrf >0 and ts == tfxd:
-                        next_url = url.replace(str(tfxd), str(tfrf))
-                        if not next_url in self.urls:
-                            self.urls.append(next_url)
-                            print 'appending next url: ' + next_url
-                    else:
-                        raise IOError("next fragment not found")
+                    if 'FragmentInfo' not in url:
+                        tfxd, tfrf = self.get_tf(path+'/'+u)
+
+                        if ('video' in url and tfrf not in self.video_ts) or\
+                            ('audio' in url and tfrf not in self.audio_ts):
+
+
+                            ts_loc = url.find('Fragments')
+                            #print url[ts_loc+16:-1]
+
+                            ts=int(url[ts_loc+16:-1])
+                            next_url = ""
+                            if tfxd >= 0 and tfrf >0 and ts == tfxd:
+                                next_url = url[0:ts_loc+16] + str(tfrf) + url[-1:]
+                                if True or not next_url in self.urls:
+                                    self.urls.append(next_url)
+                                    print 'appending next url: ' + next_url
+
+                            else:
+                                print ts, tfxd, tfrf
+                                raise IOError("next fragment not found")
 
 
 
                 #handle errors
                 except urllib2.HTTPError, e:
-                    print "HTTP Error:",e.code , url
+                    if e.code == '412':
+                        print 'fragment is not ready, wait for 5 secs.'
+                        time.sleep(5)
+                        self.urls.insert(self.urls.index(u)+1, u)
+                    else:
+                        print "HTTP Error:",e.code , url
                 except urllib2.URLError, e:
                     print "URL Error:",e.reason , url
 

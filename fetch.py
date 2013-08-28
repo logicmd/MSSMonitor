@@ -40,10 +40,10 @@ def fetch_sample_manifest_with_cookies(opener):
 
 
 def fetch_fragment(SSM):
-    SSM.fetch_fragment()
-
-def fetch_live_fragment(SSM):
-    SSM.fetch_live_fragment()
+    if SSM.is_live:
+        SSM.fetch_live_fragment()
+    else:
+        SSM.fetch_fragment()
 
 
 if __name__ == '__main__':

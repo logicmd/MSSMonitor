@@ -76,7 +76,7 @@ def parse(manifest_content, manifest_url, SSM):
     root = ET.fromstring(manifest_content)
     if root.tag == 'SmoothStreamingMedia':
         SSM.duration = root.get('Duration')
-        SSM.is_live = root.get('IsLive')
+        SSM.is_live = bool(root.get('IsLive'))
         #print root.get('Duration')
 
     time_sync_point = 2
@@ -115,7 +115,6 @@ def parse(manifest_content, manifest_url, SSM):
                 elif stream_index_child.tag == 'QualityLevel':
                     SSM.audio_quality.append(stream_index_child.get('Bitrate'))
 
-
     # For debug
     SSM.base_url = manifest_url
     SSM.build_url()
@@ -125,9 +124,22 @@ def open_file():
     f = open('data/Manifest_fetch.xml')
     return f.read()
 
+
+def error_code_handler():
+    try:
+        print urllib2.urlopen('http://ss.logicmd.net/not.exist').read()
+    except urllib2.HTTPError, e:
+        print e.code
+        print e.code==404
+        print e.msg
+        print e.headers
+        print e.fp.read()
+
 if __name__ == '__main__':
     # SSM = SmoothStreamingMedia()
     # parse(open_file(), 'http://ss.logicmd.net/tears/tears_of_steel_720p.ism/Manifest', SSM)
     # for vu in SSM.video_urls:
     #     print vu
-    config_parse()
+
+    #config_parse()
+    error_code_handler()

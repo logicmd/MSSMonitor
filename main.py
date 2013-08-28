@@ -24,7 +24,7 @@ def test_live():
     url = 'http://ss.logicmd.net/live/LiveSmoothStream.isml/Manifest'
     SSM = SmoothStreamingMedia()
     parser.parse(fetcher.fetch_manifest(url), url, SSM)
-    fetcher.fetch_live_fragment(SSM)
+    fetcher.fetch_fragment(SSM)
 
 
 def test2():
@@ -57,6 +57,11 @@ def main():
         SSM = SmoothStreamingMedia()
         parser.parse(manifest, manifest_url, SSM)
         fetcher.fetch_fragment(SSM)
+
+def test_list_in():
+    l = ['abc', 'bbc', 'sadcsdf=100', 'sadcas=123', 'sadsdc=1324']
+    if 'sadcas=123' in l:
+        print 'fuck'
 
 if __name__ == '__main__':
     test_live()
