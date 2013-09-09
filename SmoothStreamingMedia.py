@@ -24,6 +24,7 @@ class SmoothStreamingMedia:
         self.audio_ts_offset = ''
         self.video_ts = []
         self.audio_ts = []
+        self.opener = None
 
     #def info(self):
     #    s='VDuration is ' + self.duration + '/n'
@@ -128,7 +129,10 @@ class SmoothStreamingMedia:
 
         # Open the url
         try:
-            f = urllib2.urlopen(req)
+            if not self.opener:
+                f = urllib2.urlopen(req)
+            else:
+                f = self.opener.open(url)
             print "downloading manifest--"+url
 
             # Open our local file for writing
@@ -173,7 +177,10 @@ class SmoothStreamingMedia:
 
                 # Open the url
                 try:
-                    f = urllib2.urlopen(req)
+                    if not self.opener:
+                        f = urllib2.urlopen(req)
+                    else:
+                        f = self.opener.open(url)
                     print "[%d]downloading %s" %(counter, url)
                     counter += 1
 
@@ -219,7 +226,10 @@ class SmoothStreamingMedia:
 
                 # Open the url
                 try:
-                    f = urllib2.urlopen(req)
+                    if not self.opener:
+                        f = urllib2.urlopen(req)
+                    else:
+                        f = self.opener.open(url)
                     print "[%d]downloading %s" %(counter, url)
                     counter += 1
 

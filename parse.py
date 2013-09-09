@@ -69,6 +69,14 @@ def config_parse(files='conf/Request.json'):
 
     return opener
 
+def opener_builder(ua, cookies):
+    opener = urllib2.build_opener()
+    if ua:
+        opener.addheaders.append(('User-agent', ua))
+    if cookies:
+        opener.addheaders.append(('User-agent', cookies))
+    return opener
+
 
 def parse(manifest_content, manifest_url, SSM):
     # tree = ET.parse(manifest_file)
