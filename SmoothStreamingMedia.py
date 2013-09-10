@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import urllib2
-import datetime
+import datetime, time
 import os
 import struct
 
@@ -133,7 +133,7 @@ class SmoothStreamingMedia:
                 f = urllib2.urlopen(req)
             else:
                 f = self.opener.open(url)
-            print "downloading manifest--"+url
+            print "{}{}{}downloading manifest--"+url
 
             # Open our local file for writing
             local_file = open(file_path+'/'+file_name, "w")
@@ -196,25 +196,39 @@ class SmoothStreamingMedia:
                 except urllib2.URLError, e:
                     print "URL Error:",e.reason , url
 
-    def fetch_live_fragment(self, base_path='./Snapshot', max_num=100):
+    def fetch_live_fragment(self, base_path='./Snapshot', max_num=10000):
         url_prefix, ism = self.get_url_ism()
         timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
         path = base_path + '/' + timestamp + '/' + ism
 
+
+        cur_t = time.clock()
         self.sub_fetch_manifest(url_prefix, path)
 
         #Fetch Fragment
         counter = 1
         if self.urls:
-
+            last_t = 0
             for u in self.urls:
 
-                if counter > max_num:
+                #在第一次调用的时候，返回的是程序运行的实际时间；
+                #以第二次之后的调用，返回的是自第一次调用后,到这次调用的时间间隔
+                cur_t = time.clock()
+                if cur_t - last_t > 10:
+                    self.sub_fetch_manifest(url_prefix, path)
+                    last_t = cur_t
+
+
+                if max_num > 0 and counter > max_num:
                     break
 
                 i = u.rfind('/')
                 extended_path = u[:i]
+
+                if 'http' in extended_path:
+                    raise IOError("[[FUCK]]" + u + '\n' + extended_path)
+
 
                 file_path = path+'/'+extended_path
                 file_name = u[i+1:]
@@ -240,23 +254,23 @@ class SmoothStreamingMedia:
                     local_file.write(f.read())
                     local_file.close()
 
-                    if 'FragmentInfo' not in url:
+                    if 'FragmentInfo' not in u:
                         tfxd, tfrf = self.get_tf(path+'/'+u)
 
-                        if ('video' in url and tfrf not in self.video_ts) or\
-                            ('audio' in url and tfrf not in self.audio_ts):
+                        if ('video' in u and tfrf not in self.video_ts) or\
+                            ('audio' in u and tfrf not in self.audio_ts):
 
 
-                            ts_loc = url.find('Fragments')
-                            #print url[ts_loc+16:-1]
+                            ts_loc = u.find('Fragments')
+                            #print u[ts_loc+16:-1]
 
-                            ts=int(url[ts_loc+16:-1])
+                            ts=int(u[ts_loc+16:-1])
                             next_url = ""
                             if tfxd >= 0 and tfrf >0 and ts == tfxd:
-                                next_url = url[0:ts_loc+16] + str(tfrf) + url[-1:]
-                                if True or not next_url in self.urls:
+                                next_url = u[0:ts_loc+16] + str(tfrf) + u[-1:]
+                                if not next_url in self.urls:
                                     self.urls.append(next_url)
-                                    print 'appending next url: ' + next_url
+                                    #print '[][][]appending next url: ' + next_url
 
                             else:
                                 print ts, tfxd, tfrf
@@ -266,9 +280,9 @@ class SmoothStreamingMedia:
 
                 #handle errors
                 except urllib2.HTTPError, e:
-                    if e.code == '412':
-                        print 'fragment is not ready, wait for 5 secs.'
-                        time.sleep(5)
+                    if e.code == 412:
+                        print '()()()fragment is not ready, wait for 2 secs.'
+                        time.sleep(2)
                         self.urls.insert(self.urls.index(u)+1, u)
                     else:
                         print "HTTP Error:",e.code , url
